@@ -33,3 +33,46 @@ reachAngles = reachAngles(reachAngles ~= (270/180)*pi );
 timeStep = 1e-3; % 1ms
 
 %%
+
+clear all; close all;
+ load('monkeydata_training.mat');
+trials = trial;
+%% trial: 100 trials by 8 reaching angles
+% trial(1,1) - 
+x = trials(1,1);
+
+%% Raster plot
+neural = x.spikes;
+colormap('gray')
+imagesc(~neural);
+xlabel('Time (ms)');
+ylabel('Neural Index');
+title('Raster plot');
+
+%% All trials
+K = 98; timeWindowLen = 5; timeWindow = 1*10^(-3)*timeWindowLen; t = 1;
+tLow = 300; tUpper = 100;
+for angle = 1:8
+DtIndex = timeWindowLen - 1;
+%for t = 1:size(trial,1)
+    trial = trials(t,angle);
+    spikes = trial.spikes(:, :);
+    lengthSpike = size(spikes, 2);
+    spikes = spikes(:, tLow:lengthSpike - tUpper);
+    timeUpperIndex = size(spikes,2)- DtIndex;
+    spikeDensity = zeros(timeUpperIndex, 1);
+    for time = 1:timeUpperIndex
+        numSpikesWindow = spikes(:, time:DtIndex + time);
+        numOccur = sum(numSpikesWindow,2);
+        spikeDensity(time) = sum(numOccur,1)/(K*timeWindow);
+    end
+%end
+
+%% Peri stimulus time histogram
+figure;
+subplot(2,1,1)
+tAxis = [1:timeUpperIndex].*1*10^(-3);
+plot(tAxis, spikeDensity); hold on; xlabel('Time (s)'); ylabel('Spike Density');
+subplot(2,1,2)
+plot(tAxis, trial.handPos(1:2,tLow:lengthSpike - tUpper - DtIndex));
+end
