@@ -1,0 +1,8 @@
+*.asv
+~$*.docx
+~$*.pptx
+*.mat
+*.txt
+*.bin
+*.eps
+*.tmp
