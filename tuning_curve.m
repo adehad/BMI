@@ -102,4 +102,6 @@ for jj=neuronSel
         xlim([xLims])
         xticks(rad2deg(reachAngles))
         grid on; grid minor
+        title(sprintf('Neuron %d',jj))
+        xlabel('angle (degrees)')
 end
