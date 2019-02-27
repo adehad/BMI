@@ -22,7 +22,7 @@ for i = 1:100
 end
 
 % uncomment to plot rastor plot for all trials for given neuron
-%imagesc(out)
+imagesc(out)
 
 % sum down the columns to find total at each time for given cell and given
 % direction
