@@ -16,12 +16,16 @@ load monkeydata_training.mat
     %         2 = vertical movement along screen plane  /\ and \/
     %         3 = perpendicular to screen - relatively small
 
-% reaching angles: 30/180?, 70/180?, 110/180?, 150/180?, 190/180?,
-%                  230/180?,
-%                  310/180?, 350/180?
+% reaching angles: 30/180pi, 70/180pi, 110/180pi, 150/180pi, 190/180pi,
+%                  230/180pi,
+%                  310/180pi, 350/180pi
 % NOTE: 270/180 is intentionally not here
 
 % The actual duration of each angle event is not consistent
+
+% The end goal is for a prediction of the next position, we will be given
+% incrementally more data (in 20ms chunks) and be asked to predict the next
+% position
 %% Initialise some variables
 
 % Reaching Angle set
