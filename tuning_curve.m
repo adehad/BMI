@@ -80,7 +80,7 @@ end
 %% Plot 
 fH = {}; % reset figure handle cell array
 
-neuronSel = 1:10; 
+neuronSel = [98,97,96,95,93,92,91,90,89]; 
 stdMaxFactor = 0.9; % allow upto 90% of std max
 
 % Tuning Curves
