@@ -1,5 +1,11 @@
 # BMI
 
+# TODOs
+Dack: Time Series / Angle - PCA 
+Shafa: SVM Prediction
+Ash: Papers from lab that provided data
+Adel: Tuning Curve Population Coding
+
 # Approaches:
 1. Eigen-neuron:
 	1. Create a `98x1000` (Ash found max value less than 1e3) zero padded thing for eigenneurons
