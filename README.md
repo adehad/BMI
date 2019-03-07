@@ -1,10 +1,19 @@
 # BMI
 
 # TODOs
-Dack: Time Series / Angle - PCA 
-Shafa: SVM Prediction
-Ash: Papers from lab that provided data
-Adel: Tuning Curve Population Coding
+Dack: Confusion Matrix, Error Given the Mean Trajectory (RMSE), Make function selecting angle
+
+Shafa: NLMS
+
+Ash: Report (Overleaf), investigate code efficiency 
+
+Adel: Make a function that takes an average trajectory and an angle - use LMS for some weights
+
+# Further Discussions
+- Bayes
+- K-nearest centroid - uses the Fano Factor - to make an assumption of the movement decision. 
+  - Captures population vector by using Fano factor for each neuron - indicates the neuron preference which is reflected in the accuracy of the k-nearest centroid
+  - LMS captures finer tuning when comapred to the mean trajectory
 
 # Approaches:
 1. Eigen-neuron:
