@@ -294,7 +294,7 @@ gdNeur = length(neuronSel); % number of good neurons
 dataLen = length(ref.x);
 
 % iterate over time
-for incAngle = 1%:numAngles  
+for incAngle = 1:numAngles  
 %     for n=1:dataLen % discrete time increment
         
         % Each neuron has an associated weight
