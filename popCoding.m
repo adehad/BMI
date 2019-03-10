@@ -71,19 +71,22 @@ for incNeuron=1:numNeurons        % for each neuron
             tuningCurve{incNeuron}.stdMat(incTrial,incAngle) = ...
                 std( tempSpikes, [] ,2); 
           
-            % Temporary Store spikes from region of interest, add an extra
-            % chunk of activitySeg of just before the region of interest
-            tempSpikes = trial(incTrial,incAngle).spikes(incNeuron,regionOfInterest(1)-activitySeg-1:end-regionOfInterest(2));
+            % Temporary Store spikes from region of interest, add two extra
+            % chunks of activitySeg of just before the region of interest.
+            % We want the 'activity' from 20ms before the start, so we need
+            % an extra 20ms before that point (40ms) to calculate the 'activity'.
+            % 20ms = activitySeg
+            tempSpikes = trial(incTrial,incAngle).spikes(incNeuron,regionOfInterest(1)-2*activitySeg-1:end-regionOfInterest(2));
             
             % nan-pad the tempSpikes variable (row vector)
             tempSpikes = [ tempSpikes, ...
-                nan(1, activitySeg*ceil(length(tempSpikes)/activitySeg +1)-length(tempSpikes) ) ];
+                nan(1, activitySeg*ceil(length(tempSpikes)/activitySeg)-length(tempSpikes) ) ];
             
             % reshape the tempSpikes variable into batches of activitySeg
 %             tempSpikes = reshape(tempSpikes, activitySeg, []); % OLD
                 % now we take a moving window of size activitySeg
             tempSpikes2 = zeros(activitySeg, activitySeg*ceil(length(tempSpikes)/activitySeg));
-            for ii=1:length(tempSpikes2)-activitySeg
+            for ii=1:lengthMatrix(incTrial,incAngle)+activitySeg
                 tempSpikes2(:,ii) = tempSpikes(ii:ii+activitySeg-1)';
             end
             
@@ -110,6 +113,7 @@ maxT(2) = activitySeg* ceil(maxT(1)/activitySeg);
 meanMatMean = zeros(numAngles, numNeurons);
 stdMatMean  = zeros(numAngles, numNeurons);
 
+clear Traj 
 % average across trials
 for incNeuron=1:numNeurons        % for each neuron
     tuningCurve{incNeuron}.meanVecMean = zeros(numAngles, minT(1)+activitySeg);
@@ -136,8 +140,10 @@ for incNeuron=1:numNeurons        % for each neuron
              
             if incNeuron == 1 % only do this once
                 % Store Total Tracjectory
-                Traj.All(incTrial,incAngle,:,:) = trial(incTrial,incAngle).handPos(1:2,regionOfInterest(1):regionOfInterest(1)+minT(1)); %1=x,2=y
-                Traj.All_padded(incTrial,incAngle,:,:) = [ trial(incTrial,incAngle).handPos(1:2,regionOfInterest(1):regionOfInterest(1)+lengthMatrix(incTrial,incAngle)), ...
+                % we take 20ms - i.e. activitySeg before the start of the
+                % interest area
+                Traj.All(incTrial,incAngle,:,:) = trial(incTrial,incAngle).handPos(1:2,regionOfInterest(1)-activitySeg+1:regionOfInterest(1)+minT(1)); %1=x,2=y
+                Traj.All_padded(incTrial,incAngle,:,:) = [ trial(incTrial,incAngle).handPos(1:2,regionOfInterest(1)-activitySeg+1:regionOfInterest(1)+lengthMatrix(incTrial,incAngle)), ...
                                                            nan(2,maxT(1)-lengthMatrix(incTrial,incAngle)) ]; %1=x,2=y
             elseif incNeuron == 2 % only do this once 
                 Traj.mean = squeeze(mean(Traj.All,1));
@@ -273,7 +279,7 @@ end
 
 % neuronSel = 1:numNeurons;
 % neuronPref = rad2deg(reachAngles( sorted.elem(1,neuronSel) ));
-mu = 0.9;
+mu = 6;
 
 % Get angle variation with time
 
@@ -283,8 +289,9 @@ ref.x = squeeze(Traj.mean(:,1,:));
 ref.y = squeeze(Traj.mean(:,2,:));
 
 % duplicate the restion position so the algorithm can converge to it first
-ref.x = [ones(numAngles,activitySeg-1).*ref.x(:,1) ref.x];
-ref.y = [ones(numAngles,activitySeg-1).*ref.y(:,1) ref.y];
+% NOW DONE IN EARLIER PROCESSING
+% ref.x = [ones(numAngles,activitySeg-1).*ref.x(:,1) ref.x];
+% ref.y = [ones(numAngles,activitySeg-1).*ref.y(:,1) ref.y];
 
 clear pred err
 
@@ -350,7 +357,7 @@ for incAngle = 1:numAngles
 %     end
 end
 
-%%
+%
 plotLMS = true;
 
 whatAngle = 1;  % max value = numAngles
@@ -360,21 +367,21 @@ if plotLMS
     figure; hold on
      plot(1:dataLen,W.x{whatAngle}(whatNeuron,2:end))
      plot(1:dataLen,W.y{whatAngle}(whatNeuron,2:end))
-     title(sprintf('Neuron Weights against Time\n Neuron History Size = %d, Neuron = %s, Angle = %d',activitySeg, num2str(neuronSel(whatNeuron)), round(rad2deg(reachAngles(whatAngle))) ))
+     title(sprintf('Neuron Weights against Time\n Neuron History Size = %d, Neuron = %s, Angle = %d, $\\mu$ = %d',activitySeg, num2str(neuronSel(whatNeuron)), round(rad2deg(reachAngles(whatAngle))), mu ))
      ylabel('weight magnitude')
      xlabel('time index')
      legend({'x','y'},'Location','best')
     figure; hold on
       plot(1:dataLen,err.x(whatAngle,:))
       plot(1:dataLen,err.y(whatAngle,:))
-      title(sprintf('Prediction Error against Time\n Neuron History Size = %d, Angle = %d',activitySeg, round(rad2deg(reachAngles(whatAngle))) ))
+      title(sprintf('Prediction Error against Time\n Neuron History Size = %d, Angle = %d, $\\mu$ = %d',activitySeg, round(rad2deg(reachAngles(whatAngle))), mu ))
       ylabel('magnitude')
       xlabel('time index')
       legend({'x','y'},'Location','best')
     figure; hold on
       plot(ref.x(whatAngle,:),ref.y(whatAngle,:),'k:')
       plot(pred.x(whatAngle,:),pred.y(whatAngle,:))
-      title(sprintf('Prediction vs Actual\n Neuron History Size = %d, Angle = %d',activitySeg, round(rad2deg(reachAngles(whatAngle))) ))
+      title(sprintf('Prediction vs Actual\n Neuron History Size = %d, Angle = %d, $\\mu$ = %d',activitySeg, round(rad2deg(reachAngles(whatAngle))), mu ))
       xlabel('x pos')
       ylabel('y pos')
       legend({'real','pred'},'Location','best')
