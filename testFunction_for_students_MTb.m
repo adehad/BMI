@@ -3,10 +3,10 @@
 % This function first calls the function "positionEstimatorTraining" to get
 % the relevant modelParameters, and then calls the function
 % "positionEstimator" to decode the trajectory. 
-
+% teamName = 'MonkeyBusiness';
 function RMSE = testFunction_for_students_MTb(teamName)
 
-load monkeydata0.mat
+load monkeydata_training.mat
 
 % Set random number generator
 rng(2013);
@@ -19,7 +19,7 @@ trainingData = trial(ix(1:50),:);
 testData = trial(ix(51:end),:);
 
 fprintf('Testing the continuous position estimator...')
-
+continuousEstimator0;
 meanSqError = 0;
 n_predictions = 0;  
 
