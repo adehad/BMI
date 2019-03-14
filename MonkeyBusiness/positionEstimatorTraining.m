@@ -177,10 +177,10 @@ function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
     end % end neuron
 
     % minT = shortest trial duration, 1=normal, 2=padded
-    minT(1) = min(lengthMatrix,[],'all');
+    minT(1) = min(min(lengthMatrix));
     minT(2) = activitySeg* ceil(minT(1)/activitySeg);
 
-    maxT(1) = max(lengthMatrix,[],'all');
+    maxT(1) = max(max(lengthMatrix));
     maxT(2) = activitySeg* ceil(maxT(1)/activitySeg);
 
     meanMatMean = zeros(numAngles, numNeurons);
@@ -331,8 +331,8 @@ function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
 
     %% Population Coding
     % initial step-size
-    mu0 = 0.05;
-    epsilon = 10^-4; % small regularisation term used to avoid division by zero 
+    mu0 = 0.5;
+    epsilon = 0.02; % small regularisation term used to avoid division by zero 
 
     % reference signals
     ref.x = squeeze(Traj.mean(:,1,:));
@@ -343,6 +343,8 @@ function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
     gdNeur = length(neuronSel); % number of good neurons
     dataLen = length(ref.x);
 
+    expFilterPrevWeight = 0.6;
+        
     % iterate over time
     for incAngle = 1:numAngles    
         % Each neuron has an associated weight
@@ -372,6 +374,11 @@ function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
             end
             predX(n) = predX(n)/length(neuronSel);
             predY(n) = predY(n)/length(neuronSel);
+            
+%             if n>1
+%                 predX(n) = expFilterPrevWeight*predX(n-1) + (1-expFilterPrevWeight)*predX(n);
+%                 predY(n) = expFilterPrevWeight*predY(n-1) + (1-expFilterPrevWeight)*predY(n);
+%             end
 
             % prediction error n, e(n)
             errX(n) = refX(n) - predX(n);

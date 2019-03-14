@@ -52,7 +52,7 @@ tBeginTarget = 1; tEndTarget = 300;
 modelParameters.predAngle = predAngle;
 
 [x,y] = popCoding_estimator(test_data, modelParameters);
-fprintf('\nPredicted X:%.4f \t Y:%.4f \n',x,y)
+% fprintf('\nPredicted X:%.4f \t Y:%.4f \n',x,y)
 
 end
 
@@ -169,10 +169,10 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
     end % end neuron
 
     % minT = shortest trial duration, 1=normal, 2=padded
-    minT(1) = min(lengthMatrix,[],'all');
+    minT(1) = min(min(lengthMatrix));
     minT(2) = activitySeg* ceil(minT(1)/activitySeg);
 
-    maxT(1) = max(lengthMatrix,[],'all');
+    maxT(1) = max(max(lengthMatrix));
     maxT(2) = activitySeg* ceil(maxT(1)/activitySeg);
 
     meanMatMean = zeros(numAngles, numNeurons);
@@ -227,7 +227,7 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
     
     % Each neuron has an associated weight
     W = modelParameters.W;
-
+    expFilterPrevWeight = 0.6;
     
     dataLen = minT(1);
     
@@ -257,6 +257,11 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
             end
             predX(n) = predX(n)/length(neuronSel);
             predY(n) = predY(n)/length(neuronSel);
+            
+            if n>1
+                predX(n) = expFilterPrevWeight*predX(n-1) + (1-expFilterPrevWeight)*predX(n);
+                predY(n) = expFilterPrevWeight*predY(n-1) + (1-expFilterPrevWeight)*predY(n);
+            end
 
             else
                 % Stops predicting once we run out of weights
