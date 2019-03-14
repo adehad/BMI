@@ -1,5 +1,5 @@
 
-function [x, y] = positionEstimator(test_data, modelParameters)
+function [x, y, modelParameters] = positionEstimator(test_data, modelParameters)
 
 % **********************************************************
 %
@@ -46,10 +46,13 @@ function [x, y] = positionEstimator(test_data, modelParameters)
 
 % - [x, y]:
 %     current position of the hand
-
-tBeginTarget = 1; tEndTarget = 300;
-[predAngle] = testAngleClassification(test_data, tBeginTarget, tEndTarget, modelParameters.clusterCentre, modelParameters.trainCentre);
-modelParameters.predAngle = predAngle;
+%isempty(modelParameters.predAngle) 
+if length(test_data.spikes)<=320
+    tBeginTarget = 1; tEndTarget = 300;
+    [predAngle] = testAngleClassification(test_data, tBeginTarget, tEndTarget, modelParameters.clusterCentre, modelParameters.trainCentre);
+    modelParameters.predAngle = predAngle;
+%     disp(['Pred Angle: ' num2str(predAngle)]);
+end
 
 [x,y] = popCoding_estimator(test_data, modelParameters);
 % fprintf('\nPredicted X:%.4f \t Y:%.4f \n',x,y)
@@ -178,7 +181,6 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
     meanMatMean = zeros(numAngles, numNeurons);
     stdMatMean  = zeros(numAngles, numNeurons);
 
-    clear Traj
     % average across trials
     for incNeuron=1:numNeurons        % for each neuron
         tuningCurve{incNeuron}.meanVecMean = zeros(numAngles, minT(1)+activitySeg);
@@ -228,11 +230,18 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
     % Each neuron has an associated weight
     W = modelParameters.W;
     expFilterPrevWeight = 0.6;
-    
+        
     dataLen = minT(1);
     
     % iterate over time
-    for incAngle = modelParameters.predAngle    
+    for incAngle = modelParameters.predAngle  
+        physicalLimit = struct;
+        physicalLimit.x = modelParameters.ref.x(incAngle, end);
+        physicalLimit.y = modelParameters.ref.y(incAngle, end);
+        physicalLimit.xStep = modelParameters.ref.xStep(incAngle);
+        physicalLimit.yStep = modelParameters.ref.yStep(incAngle);
+        limitOffset.x = 1.1;
+        limitOffset.y = 1.1;
 
         % initialise some vars
         predX = zeros(1,dataLen);
@@ -241,8 +250,6 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
         for n=1:dataLen
             
             if n < size(W.x{incAngle},2)
-        
-
             % initialise first prediction with bad weights
             for jj=1:gdNeur % using selected neurons
                 predX(n) = predX(n) + W.x{incAngle}(jj,n)*tuningCurve{neuronSel(jj)}.meanVecMean(1,n) ...
@@ -258,11 +265,33 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
             predX(n) = predX(n)/length(neuronSel);
             predY(n) = predY(n)/length(neuronSel);
             
+
+            
+            
             if n>1
+                % Enforce typical physical step size
+                if abs(predX(n)-predX(n-1)) > limitOffset.x*abs(physicalLimit.xStep)*activitySeg
+                    predX(n) =  predX(n-1) + limitOffset.x*physicalLimit.xStep*sign(predX(n)-predX(n-1))*activitySeg;
+                end
+
+                if abs(predY(n)-predY(n-1)) > limitOffset.y*abs(physicalLimit.yStep)*activitySeg
+                    predY(n) =  predY(n-1) + limitOffset.y*physicalLimit.yStep*sign(predY(n)-predY(n-1))*activitySeg;
+                end
+                
+                % Exponential Filtering
                 predX(n) = expFilterPrevWeight*predX(n-1) + (1-expFilterPrevWeight)*predX(n);
                 predY(n) = expFilterPrevWeight*predY(n-1) + (1-expFilterPrevWeight)*predY(n);
             end
-
+            
+            % Enforce physical limits
+            if abs(predX(n)) >= limitOffset.x*abs(physicalLimit.x)
+                predX(n) =  limitOffset.x*physicalLimit.x;
+            end
+            
+            if abs(predY(n)) >= limitOffset.y*abs(physicalLimit.y)
+                predY(n) =  limitOffset.y*physicalLimit.y;
+            end
+            
             else
                 % Stops predicting once we run out of weights
                 
@@ -286,4 +315,3 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
     y = y(end);
 
 end
-

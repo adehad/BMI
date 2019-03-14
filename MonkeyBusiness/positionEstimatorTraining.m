@@ -96,7 +96,7 @@ set(groot,  'DefaultLineLineWidth', 2.5, ...
 tBeginTarget = 1; tEndTarget = 300;
 % nearest-centroid classification for angles
 [clusterCentre, meanXTrain] = trainAngleClassification(training_data, tBeginTarget, tEndTarget);
-[W, neuronSel, neuronPref, maxLen] = popCodingTrain(training_data);
+[W, neuronSel, neuronPref, ref] = popCodingTrain(training_data);
 
 % output structure containing training parameters
 modelParameters = struct;
@@ -105,11 +105,12 @@ modelParameters.neuronSel = neuronSel;
 modelParameters.neuronPref = neuronPref;
 modelParameters.clusterCentre = clusterCentre;
 modelParameters.trainCentre = meanXTrain;
-modelParameters.maxLen = maxLen;
+modelParameters.ref = ref;
+modelParameters.predAngle = [];
 end
 
 %%% ---- Least Mean Square (LMS) Filter for Trajectory Prediction ---- %%%
-function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
+function [W, neuronSel, neuronPref, ref] = popCodingTrain(trial)
     %%  Initialise some variables
 
     % Reaching Angle set
@@ -337,6 +338,10 @@ function [W, neuronSel, neuronPref, maxLen] = popCodingTrain(trial)
     % reference signals
     ref.x = squeeze(Traj.mean(:,1,:));
     ref.y = squeeze(Traj.mean(:,2,:));
+    ref.xStd = squeeze(Traj.std(:,1,:));
+    ref.yStd = squeeze(Traj.std(:,2,:));
+    ref.xStep = max(abs(diff(ref.x,1,2)),[],2);
+    ref.yStep = max(abs(diff(ref.y,1,2)),[],2);
 
     clear pred err
 
