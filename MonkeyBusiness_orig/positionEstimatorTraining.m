@@ -248,22 +248,22 @@ function [W, neuronSel, neuronPref, ref] = popCodingTrain(trial)
     [sorted.std , sorted.elem] = sort(stdMatMean,1,'descend');
 
     % determine selectivity
-%     for ii=neuronList(goodNs) % for each neuron
-% 
-%         neuroTest = find( sorted.std(:,ii) >= stdMaxFactor*sorted.std(1,ii) );
-% 
-%         if length(neuroTest) < 3
-%             neuroTest = sorted.elem(neuroTest,ii);
-%             neuroTest = sort(neuroTest,1,'descend');
-%             if max(diff(neuroTest,1))>1
-%                 if min(diff(neuroTest,1))>1
-%                     goodNs(ii) = false; % it a bad neuron
-%                 end
-%             end
-%         else
-%             goodNs(ii) = false; % it a bad neuron
-%         end
-%     end
+    for ii=neuronList(goodNs) % for each neuron
+
+        neuroTest = find( sorted.std(:,ii) >= stdMaxFactor*sorted.std(1,ii) );
+
+        if length(neuroTest) < 3
+            neuroTest = sorted.elem(neuroTest,ii);
+            neuroTest = sort(neuroTest,1,'descend');
+            if max(diff(neuroTest,1))>1
+                if min(diff(neuroTest,1))>1
+                    goodNs(ii) = false; % it a bad neuron
+                end
+            end
+        else
+            goodNs(ii) = false; % it a bad neuron
+        end
+    end
 
     neuronSel = neuronList(goodNs);
     neuronPref = []; % clear neuron direction preferences variable
