@@ -18,7 +18,7 @@ addpath(teamName);
 trainingData = trial(ix(1:50),:);
 testData = trial(ix(51:end),:);
 
-fprintf('Testing the continuous position estimator...')
+fprintf('Testing the continuous position estimator... \n')
 continuousEstimator0;
 meanSqError = 0;
 n_predictions = 0;  
@@ -29,8 +29,11 @@ axis square
 grid
 
 % Train Model
+tic
 modelParameters = positionEstimatorTraining(trainingData);
+fprintf('Training took: %.2f seconds \n', toc)
 
+tic
 for tr=1:size(testData,1)
     display(['Decoding block ',num2str(tr),' out of ',num2str(size(testData,1))]);
     pause(0.001)
@@ -65,10 +68,12 @@ for tr=1:size(testData,1)
         plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
     end
 end
+fprintf('Testing took: %.2f seconds \n', toc)
 
 legend('Decoded Position', 'Actual Position')
 
-RMSE = sqrt(meanSqError/n_predictions) 
+RMSE = sqrt(meanSqError/n_predictions);
+fprintf('RMSE: %f \n', RMSE);
 
 rmpath(genpath(teamName))
 
