@@ -1,3 +1,5 @@
+%%% Team Members: Adel Haddad, Aishwarya Pattar, Alex Dack, Shafa Balaram
+%%% BMI Spring 2019 (Update 19th March 2019)
 
 function [x, y, modelParameters] = positionEstimator(test_data, modelParameters)
 
