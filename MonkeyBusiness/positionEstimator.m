@@ -341,7 +341,7 @@ function [x,y] = popCoding_estimator(trial, modelParameters)
         try 
             y = y(end);
         catch
-            y = modelParameters.lastX;
+            y = modelParameters.lastY;
         end
     end
 
