@@ -1,5 +1,8 @@
 close all; clear all; clc;
 
+% start timer 
+tic
+
 % load pre-processed data
 cumulativeSpikes = load('featureExtractedData.mat');
 cumulativeSpikes = cumulativeSpikes.outputTrain;
@@ -12,8 +15,6 @@ numTrials = 100;
 numAngles = 8;
 numCoord = 2;
 sequenceLen = size(cumulativeSpikes,3);
-% global trainingLoss
-trainingLoss = [];
 
 % split into 80% training and 20% test sets
 [xTrain, lTrain, xTest, lTest] = splitTrain(cumulativeSpikes,handPosition,numAngles);
@@ -42,7 +43,7 @@ for j = 1 : 0.2*numTrials*numAngles
     posTest{j,1} = squeeze(ctrLTest(j,:,:));
 end
 
-% LSTM architecture with 200 hidden units
+% LSTM architecture with 100 hidden units
 numFeatures = 2*numNeuralUnits;
 numHiddenUnits = 100;
 layers = [ ...
@@ -57,12 +58,12 @@ layers = [ ...
 % factor of 0.5.
 miniBatchSize = 20*numAngles;
 options = trainingOptions('adam', ...
-    'MaxEpochs',75, ...
+    'MaxEpochs',300, ...
     'GradientThreshold',1, ...
     'InitialLearnRate',0.01, ...
     'MiniBatchSize',miniBatchSize, ...
     'LearnRateSchedule','piecewise', ...
-    'LearnRateDropPeriod',37, ...
+    'LearnRateDropPeriod',50, ...
     'LearnRateDropFactor',0.5, ...
     'Verbose',0, ...
     'ExecutionEnvironment','cpu', ...
@@ -72,31 +73,74 @@ options = trainingOptions('adam', ...
 % Train the LSTM network
 net = trainNetwork(spikesTrain,posTrain,layers,options);
 
-% %%
-% net = load('net_1200.mat')
-% net = net.net;
-% 
-% 
-% %%
-% miniBatchSize = 20*numAngles;
-% LPred = predict(net,spikesTest,'MiniBatchSize',miniBatchSize);
-% figure();
-% time = 1 : sequenceLen;
-% subplot(2,1,1);
-% plot(LPred{4,1}(1,:), LPred{4,1}(2,:));
-% hold on;
-% plot(posTest{4,1}(1,:), posTest{4,1}(2,:));
-% 
-% 
-% for i = 1 : 0.2*numTrials*numAngles
-%     RMSE(i) = sqrt(mean(mean((LPred{i,1}-posTest{i,1}).^2)));
-% end
-% 
+% stop timer 
+t = toc;
+display(t)
 
+% save network
+save('net.mat', 'net')
+%%
+% net = load('net.mat');
+% lstm = net.net;
+miniBatchSize = 20*numAngles;
+LPred = predict(net,spikesTest,'MiniBatchSize',miniBatchSize);
+fig1 = figure('Color', [1,1,1]);
+set(gcf,'units','centimeters','Position',[1 1 20 15])
+time = 1 : sequenceLen;
+plot(LPred{1,1}(1,:), LPred{1,1}(2,:), 'linewidth', 1.5);
+hold on;
+plot(posTest{1,1}(1,:), posTest{1,1}(2,:), 'linewidth', 1.5);
+grid on; grid minor
+set(gca, 'FontName', 'Times', 'FontSize', 20)
+l = legend('original, zero-mean signal', 'predicted signal');
+set(l,'fontsize', 20, 'interpreter', 'latex', 'location', 'southeast');
+xlabel('Horizontal Displacement, $x$','FontSize',22,'Interpreter','latex');
+ylabel('Vertical Displacement, $y$','FontSize',22,'Interpreter','latex');
+title(['\bf{Prediction of Hand Postion}', newline, ...
+       '\bf{from Neural Spikes using an LSTM}'],'FontSize',22,'Interpreter','latex');
+%% save figure
+set(fig1, 'PaperSize',[21 16], ...
+    'DefaultFigurePaperUnits', 'centimeters', ...
+    'DefaultFigureUnits', 'centimeters', ...
+    'DefaultFigurePaperSize', [21, 16], ...
+    'DefaultFigurePosition', [1, 1, 20, 15])
+print(fig1, 'lstm_pred', '-dpdf', '-r400')
+
+%% Performance evaluation using the RMSE between the original centred and 
+% predicted signals
+MSE = zeros(0.2*numTrials*numAngles,1);
+for i = 1 : 0.2*numTrials*numAngles
+    MSE(i) = mean(mean((LPred{i,1}-posTest{i,1}).^2));
+end
+RMSE = sqrt(sum(MSE)/(0.2*numTrials*numAngles));
+display(RMSE)
+
+
+TrainingRMSE = load('TrainingRMSE.mat');
+TrainingRMSE = TrainingRMSE.TrainingRMSE;
+iter = 1200;
+fig2 = figure('Color', [1,1,1]);
+set(gcf,'units','centimeters','Position',[1 1 20 15])
+plot([1:iter+1], TrainingRMSE, 'linewidth', 1.5);
+xlim([1, iter])
+grid on; grid minor
+set(gca, 'FontName', 'Times', 'FontSize', 20)
+xlabel('Iteration','FontSize',22,'Interpreter','latex');
+ylabel('RMSE','FontSize',22,'Interpreter','latex');
+title(['\bf{Evolution of Training Loss (RMSE)}', newline, ...
+       '\bf{with Number of Iterations}'],'FontSize',22,'Interpreter','latex');
+%% save figure
+set(fig2, 'PaperSize',[21 16], ...
+    'DefaultFigurePaperUnits', 'centimeters', ...
+    'DefaultFigureUnits', 'centimeters', ...
+    'DefaultFigurePaperSize', [21, 16], ...
+    'DefaultFigurePosition', [1, 1, 20, 15])
+print(fig2, 'lstm_loss', '-dpdf', '-r400')
+
+% function to store training loss (RMSE)
 function info = savetrainingplot(info)
-% trainingLoss = append(trainingLoss,
-% trainingLoss =  [trainingLoss, info.TrainingRMSE];
-TrainingRMSE = info.TrainingLoss;
+
+TrainingRMSE = info.TrainingRMSE;
 
 if info.Epoch == 0
     save('TrainingRMSE.mat','TrainingRMSE');
@@ -110,10 +154,10 @@ end
 
 end
 
+% function to split dataset into 80% training and 20% testing
 function [xTrain, lTrain, xTest, lTest] = splitTrain( data, label, class)
 N = size(data,1);
 randIdx = randperm(100, 20);
-%idx = (0:class-1)*100 + randIdx
 idx = [];
 for i = 1:class
     %Partition into sets
