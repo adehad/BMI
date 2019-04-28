@@ -20,7 +20,7 @@ testData = trial(ix(51:end),:);
 
 
 fprintf('Testing the continuous position estimator... \n')
-continuousEstimator0;
+
 meanSqError = 0;
 n_predictions = 0;  
 
