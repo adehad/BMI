@@ -67,9 +67,9 @@ for tr=1:size(testData,1)
         predictionData(tr,direc).handPos = decodedHandPos;
         
         n_predictions = n_predictions+length(times);
-%         hold on
-%         plot(decodedHandPos(1,:),decodedHandPos(2,:), 'r');
-%         plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
+        hold on
+        plot(decodedHandPos(1,:),decodedHandPos(2,:), 'r');
+        plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
     end
 end
 fprintf('Testing took: %.2f seconds \n', toc)
